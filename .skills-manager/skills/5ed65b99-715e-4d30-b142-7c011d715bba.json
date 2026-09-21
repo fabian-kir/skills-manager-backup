@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "5ed65b99-715e-4d30-b142-7c011d715bba",
+  "path": "wait-what",
+  "path_key": "wait-what",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "skillssh",
+    "ref": "mattpocock/skills/wait-what",
+    "subpath": "skills/productivity/wait-what",
+    "branch": null
+  }
+}

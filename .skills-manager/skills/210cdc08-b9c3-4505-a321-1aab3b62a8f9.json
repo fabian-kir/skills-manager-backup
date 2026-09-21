@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "210cdc08-b9c3-4505-a321-1aab3b62a8f9",
+  "path": "unslop",
+  "path_key": "unslop",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "skillssh",
+    "ref": "cursor/plugins/unslop",
+    "subpath": "pstack/skills/unslop",
+    "branch": null
+  }
+}
