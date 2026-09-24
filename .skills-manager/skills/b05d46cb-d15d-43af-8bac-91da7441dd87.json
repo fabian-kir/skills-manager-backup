@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "b05d46cb-d15d-43af-8bac-91da7441dd87",
+  "path": "planning-handoff",
+  "path_key": "planning-handoff",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
