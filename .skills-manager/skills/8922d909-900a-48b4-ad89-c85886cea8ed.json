@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "8922d909-900a-48b4-ad89-c85886cea8ed",
+  "path": "t3-handoff-run",
+  "path_key": "t3-handoff-run",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
