@@ -1,0 +1,5 @@
+interface:
+  display_name: "Systemdynamik Lernassistent"
+  short_description: "Kursnah lernen, Klausuren finden, Fortschritt pflegen"
+  brand_color: "#2C5F8A"
+  default_prompt: "Nutze $systemdynamik-lernassistent, um meine Systemdynamikfrage kursnah zu beantworten und aussagekräftige Lernstandsevidenz zu pflegen."

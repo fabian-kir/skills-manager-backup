@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "9859881a-d29b-4ae1-ad42-aa7b1a444680",
+  "path": "systemdynamik-lernassistent",
+  "path_key": "systemdynamik-lernassistent",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
