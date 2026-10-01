@@ -1,11 +1,11 @@
 ---
 name: t3-handoff-run
-description: Use when running a handoff plan as T3 Code threads - creating one configured thread per unit, starting units as their dependencies land, watching for stalled or runaway units, and killing one that has gone wrong. Also use when asked to "run the handoff", "spin up the units", "what is unit C doing", or "kill that run". Do not use to write a handoff plan; that is planning-handoffs.
+description: Use when running a handoff plan as T3 Code threads - creating one configured thread per unit, starting units as their dependencies land, watching for stalled or runaway units, and killing one that has gone wrong. Also use when asked to "run the handoff", "spin up the units", "what is unit C doing", or "kill that run". Do not use to write a handoff plan; that is planning-handoff.
 ---
 
 # Running a handoff plan as T3 Code threads
 
-`planning-handoffs` produces the plan. This skill runs it: one T3 Code thread per unit,
+`planning-handoff` produces the plan. This skill runs it: one T3 Code thread per unit,
 configured correctly, started when its dependencies land, and watchable while it runs.
 
 **Why threads and not subagents.** A subagent is invisible while it works, cannot be killed
@@ -52,15 +52,17 @@ secret it is, and never put it in a skill, a plan, or a commit. `t3.py` reads
 
 ## Reading the plan
 
-A handoff plan is `HANDOFF*.md` at the repo root plus one prompt file per unit under
-`handoff/`. Both are untracked by design. From the plan you need four things:
+A handoff plan is `handoff/handoff.md` at the repo root plus one prompt file per unit,
+`handoff/Unit_<N>-<model>_<effort>.md`. Whether they are tracked or local scratch is the
+repository's call; the plan's **Handoff persistence** line says which. From the plan you need
+four things:
 
 | What | Where |
 |---|---|
-| Unit number, title, model, effort | the Units table |
+| Unit number, title, model, effort, prompt file | the Units table |
 | What may run alongside what | the `Parallel-To` column |
-| The branch every unit works on | the Branch block in each prompt |
-| Which units cannot finish without the human | the prose, usually "the attended tail" |
+| The branch each unit works on | the `Branch` column |
+| Which units cannot finish without the human | the **Attended tail** line; the final unit is always on it |
 
 Pick **one emoji for the whole handoff** and use it on every unit, so the plan's threads are
 visually one group in the thread list. Titles are exactly:
@@ -69,9 +71,9 @@ visually one group in the thread list. Titles are exactly:
 <emoji> Unit <Number> - <short task summary>
 ```
 
-The summary is the plan's own title for that unit. Do not invent a new one — `planning-handoffs`
-makes the table row, the section heading and the chat title carry identical text on purpose, and
-this is the step that keeps that true.
+The number and summary are the plan's own `Number` and `Title` for that unit. Do not invent a
+new one — `planning-handoff` gives the table row and the `### Unit <N> — <title>` heading
+identical text on purpose, and this is the step that makes the chat title match them.
 
 ## Creating the threads
 
@@ -80,16 +82,17 @@ human can see the shape of the run before any of it moves.
 
 ```bash
 t3.py create --project Ecotonomous \
-  --title "🧪 Unit A - Default model in the kernel" \
+  --title "🧪 Unit 1 - Default model in the kernel" \
   --model opus --effort high --branch t3code/improve-model-setup
 ```
 
-It prints the thread id. Keep a mapping of unit letter to thread id — you will need it for
+It prints the thread id. Keep a mapping of unit number to thread id — you will need it for
 every later command.
 
 Four fields decide whether a unit does the right work:
 
-- **`--branch`** is the plan's branch, the same one for every unit.
+- **`--branch`** is that unit's `Branch` column: the one work branch for sequential units,
+  `<work-branch>/unit-<N>` for a unit in a parallel wave.
 - **`--worktree`** is omitted for the usual case. **Omitting it means "Current checkout"**,
   which is the setting that matters most and the one the UI gets wrong. Over the API it is a
   literal `null` and it is deterministic. Pass an absolute path only when the plan calls for a
@@ -115,22 +118,23 @@ not try to pre-fill a composer — that was a UI-era workaround and it does not 
 Start a unit by handing it its prompt file whole:
 
 ```bash
-t3.py start <thread-id> --prompt-file handoff/A-default-model-in-the-kernel.md
+t3.py start <thread-id> --prompt-file handoff/Unit_1-opus_high.md
 ```
 
 Then work the dependency graph: a unit starts when every unit it depends on has landed. The
 `Parallel-To` column says which units share no files and may run at once; everything else is
 sequential. Start those together, wait, then start their dependents.
 
-**Stop dead at the attended tail.** The plan names the units that need a signature, a Touch ID,
-or a taste call the human reserved. Those are never started automatically. Tell the human the
+**Stop dead at the attended tail.** The plan's **Attended tail** line names the units that need a
+signature, a Touch ID, or a taste call the human reserved, and always the final integration
+unit, which asks before merging. Those are never started automatically. Tell the human the
 plan has reached one, say which, and wait.
 
-**A caution the plan will not state.** Units marked parallel share no *files*, but if they also
-share one checkout they share a working tree — two agents running tests in the same directory
-at once will interfere even when their edits do not overlap. If the plan puts parallel units on
-`current checkout`, say so before starting them together and let the human decide between
-sequential starts and a worktree each.
+**A caution the plan will not state.** Units in a parallel wave share no *files*, but each is on
+its own branch, and one checkout can only have one branch checked out — two of them on
+`current checkout` would switch branches under each other, and two agents running tests in one
+directory interfere even when their edits do not overlap. Before starting a wave together, say
+so and let the human decide between sequential starts and a worktree each (`--worktree`).
 
 ## Watching
 
