@@ -6,6 +6,7 @@
   "tools": {
     "claude_code": true,
     "codex": true,
+    "gemini_cli": true,
     "opencode": true
   }
 }

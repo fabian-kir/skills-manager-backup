@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "2a9775da-dc06-4fa6-be38-f58c2ea38674",
+  "path": "shared-tool-scaffold",
+  "path_key": "shared-tool-scaffold",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
