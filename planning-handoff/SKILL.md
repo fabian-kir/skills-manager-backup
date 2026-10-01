@@ -1,12 +1,38 @@
 ---
 name: planning-handoff
-description: Turns a finished planning, design or debugging session into a `handoff/` directory — `handoff/handoff.md` holding the work cut into numbered units, a dependency and parallelism table, the reasoning for the cut, a notes section units use to pass findings to each other, and the complete paste-ready prompt for every unit, plus one file per unit (`handoff/Unit_1-opus_high.md`) containing that prompt and nothing else. Each unit prompt carries its own branch, its own slice of the test suite, and its own commit; a final integration unit runs the full suite, checks the other units' work, and asks the user before merging to main. Prompts are written caveman-compressed. Use whenever someone wants work handed to other agents or fresh sessions, for example "write a handoff", "turn this into a plan", "cut this into units", "make prompts for each piece", "how do I parallelise this", "write this up so someone else can execute it", or when a long planning conversation has converged and execution happens elsewhere. Works in any code repo — branch names, verification commands, test selectors and baseline state get derived from the repo, not assumed.
+description: Turns finished planning, design, or debugging into a `handoff/` plan and paste-ready numbered unit prompts. Each unit gets a branch, focused tests, commit, and shared-note instructions; a final unit reviews work, runs full verification, and waits for user approval before merging. Use for handoffs, execution plans, parallel agent units, fresh-session prompts, or requests to split work for others. Derives repository facts and obeys repository policy for tracked files versus local scratch.
 ---
 
 # Planning handoff
 
 Plan is not conversation summary. Plan = instructions tight enough that agent with zero context run
 one unit alone, land green, commit.
+
+## Repository policy wins
+
+Before deciding how `handoff/` persists, read repository instructions and check whether target is
+ignored:
+
+```bash
+git check-ignore -v handoff/handoff.md 2>/dev/null || true
+```
+
+Repository-specific rules override this skill's default workflow. If repository says handoffs are
+scratch, ignored, untracked, or never committed:
+
+- keep `handoff/` local and untracked;
+- never use `git add -f` or change `.gitignore` to bypass that rule;
+- do not commit handoff notes with unit work;
+- state in plan that handoff is worktree-local;
+- before merge, verify no handoff path is tracked.
+
+Deleting handoff in later commit is not equivalent. Merge would retain scratch in repository
+history. Durable decisions must move into repository's chosen docs, tests, or decision log before
+handoff is deleted.
+
+If separate worktrees need same untracked handoff, use repository-approved copy or shared scratch
+location. If none exists, ask user. Do not invent temporary Git history that final branch might
+merge. Same-worktree branch switches retain ignored files and need no transport.
 
 ## Output
 
@@ -102,8 +128,11 @@ session start clean.
 
 **Every unit commit own work at end.** No unit leave changes uncommitted for next unit to find.
 
-**Commit `handoff/` to work branch before any unit start.** Per-unit branches cut off it then carry
-plan and prompts, and unit notes land as normal commits on the branch that produced them.
+**Persist `handoff/` according to repository policy before any unit starts.** If repository permits
+tracked handoffs, commit it to work branch; per-unit branches then carry plan and prompts. If
+repository marks handoffs scratch or ignored, leave files local and untracked. Never force-add
+them. State chosen persistence in `handoff/handoff.md` and every unit prompt so a fresh session
+knows whether notes belong in commit.
 
 ## Cut work into units
 
@@ -185,11 +214,16 @@ Append format — own block at end of section, never touch another unit's block:
 - **For all:** <plan said X, real code does Y — <path>.>
 ```
 
-Note is part of unit's commit: `git add handoff/handoff.md` with the rest of the work.
+When repository permits tracked handoffs, note is part of unit's commit: add
+`handoff/handoff.md` with rest of work. When repository requires untracked scratch, note stays
+local and must not be staged. Closing report carries same fact so it survives if local scratch is
+lost.
 
-**Parallel wave = separate branches = same file touched by several units.** Say so in the prompts:
-append-own-block-only keep conflicts small, and when git still conflict, resolution is keep both
-blocks — never drop one. Final unit reconcile when it merge the wave.
+**Parallel wave = separate branches = same file touched by several units.** For tracked handoffs,
+say so in prompts: append-own-block-only keeps conflicts small, and conflict resolution keeps both
+blocks. For untracked handoffs in same worktree, branches share one local file and no merge occurs.
+Separate worktrees need repository-approved transport decided before units start; otherwise wave
+cannot run parallel. Final unit reconciles every note.
 
 **Note reach nobody who already started.** Unit running parallel right now will not see it. Finding
 that blocks a running unit → note it, and say in closing report that unit <M> need re-check; final
@@ -211,6 +245,9 @@ Last unit in every plan. Attended. Its work is checking, not building:
    learned mid-flight; unread, they are worth nothing.
 5. Parallel-wave branches exist → merge them into `<work-branch>` first, resolve conflicts (notes
    section: keep every block, drop none), rerun suite.
+6. Repository forbids tracked handoffs → run `git ls-files -- handoff 'HANDOFF*.md'` and
+   `git log --oneline <baseline>..HEAD -- handoff 'HANDOFF*.md'`. Any result is a blocker. A later
+   deletion commit does not fix history; report it and stop before merge.
 
 Then the merge gate, written plain in the prompt because compression here is dangerous:
 
@@ -230,6 +267,9 @@ to project vocabulary.
 **Goal:** <one or two sentences — what exists when all units landed.>
 
 **Work branch:** `<branch>` — created off `<sha>`. <Per-unit branches for wave N, if any.>
+
+**Handoff persistence:** <tracked and committed because repository permits it / local untracked
+scratch because repository forbids committing it>. <Transport rule for separate worktrees, if any.>
 
 **Baseline:** <green/red> at `<sha>` — <exact numbers verification report>.
 <If red: which parts, since when, and no unit start from it.>
@@ -261,7 +301,8 @@ Channel between units that never share a session. Read this section before you s
 Before you commit, append anything a later unit needs and cannot read off the diff.
 
 Own block at end, `### From unit <N> — <date> — <branch/sha>`. Never edit or delete another unit's
-block; on merge conflict here, keep both. Commit the note with your work.
+block; on merge conflict here, keep both. If handoff is tracked, commit note with work. If handoff
+is repository-required scratch, keep note untracked and repeat it in closing report.
 
 <empty until first unit writes>
 
@@ -308,7 +349,8 @@ Reader has no memory of this conversation, no access to it. Assume competence, a
 - **Note for other units, before commit.** Anything later unit need and cannot see in diff — decision
   made alone, plan assumption wrong, interface actually landed, trap. Append own block to
   `handoff/handoff.md` § "Notes between units", address it (`For unit 5:` / `For all:`), never touch
-  another block, commit it with the work. Nothing to say → nothing to write.
+  another block. Commit it with work only when repository permits tracked handoffs. Otherwise keep
+  it untracked and repeat same fact in closing report. Nothing to say → nothing to write.
 - **Done means:** selector clean, changed-file checks clean, work committed:
   ```bash
   git add -A && git commit -m "<type>(<scope>): <subject>"
@@ -337,6 +379,9 @@ Check draft against each:
 9. One prompt file per unit in `handoff/`, name match table's model and effort, content identical to
    that unit's section body — no heading, no extra line? Diff them to be sure.
 10. Notes section present with its rules, and every unit prompt say both read-it and write-it?
+11. Repository handoff policy checked with `git check-ignore` and repository instructions? If
+    handoffs are scratch, confirm no `git add -f`, no tracked handoff path, and no plan to
+    commit-then-delete.
 
 Then write files, present them. User want units run → units run in fresh sessions, one prompt file
 each. This conversation's context is what the document exist to replace.
