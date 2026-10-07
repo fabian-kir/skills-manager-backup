@@ -63,6 +63,7 @@ four things:
 | What may run alongside what | the `Parallel-To` column |
 | The branch each unit works on | the `Branch` column |
 | Which units cannot finish without the human | the **Attended tail** line; the final unit is always on it |
+| When you may raise a unit's model or effort mid-run, and for which units you must ask first | the **Escalation:** line; the **Model choices.** paragraph says why each row got its model |
 
 Pick **one emoji for the whole handoff** and use it on every unit, so the plan's threads are
 visually one group in the thread list. Titles are exactly:
@@ -83,7 +84,7 @@ human can see the shape of the run before any of it moves.
 ```bash
 t3.py create --project Ecotonomous \
   --title "🧪 Unit 1 - Default model in the kernel" \
-  --model opus --effort high --branch t3code/improve-model-setup
+  --model fable --effort high --branch t3code/improve-model-setup
 ```
 
 It prints the thread id. Keep a mapping of unit number to thread id — you will need it for
@@ -97,9 +98,14 @@ Four fields decide whether a unit does the right work:
   which is the setting that matters most and the one the UI gets wrong. Over the API it is a
   literal `null` and it is deterministic. Pass an absolute path only when the plan calls for a
   separate worktree.
-- **`--model`** accepts the plan's own vocabulary — `opus`, `sonnet`, `sonnet5.5` — and maps to
-  the real ids. Unknown values pass through unchanged, so a full id works too.
-- **`--effort`** is the plan's effort column. Fast mode stays off unless you pass `--fast`.
+- **`--model`** is the plan's Model column, in the plan's own vocabulary: `fable`, `opus`,
+  `sonnet`. Those map to the current generation T3 Code's `claudeAgent` provider lists —
+  `claude-fable-5-1`, `claude-opus-5-5`, `claude-sonnet-5-5`. `opus5` and `sonnet5` pin the older
+  generation when a plan says so. Unknown values pass through unchanged, so a full id works too.
+- **`--effort`** is the plan's Effort column: `low`, `medium`, `high`, `xhigh`, `max`. T3 Code's
+  picker also shows `ultracode` and `ultrathink`; they are not plan vocabulary and `t3.py`
+  rejects them. **There is no fast mode.** `t3.py` never sets it, Fable has no such option, and
+  no plan asks for it.
 
 Verify before starting anything:
 
@@ -107,7 +113,10 @@ Verify before starting anything:
 t3.py status --project Ecotonomous
 ```
 
-Every unit should read `NEW`, with the right branch and `current checkout`.
+Every unit should read `NEW`, with the right branch, `current checkout`, and the model and effort
+from its table row printed after the thread id — `fable high`, `opus high`, `sonnet medium`. A
+unit that reads `opus medium` when the table says otherwise is a unit about to do worse work than
+the plan paid for; fix it with `t3.py model` before starting.
 
 **There is no way to stage prompt text without sending it.** The API has no draft-text command;
 `thread.turn.start` sends immediately. So a unit is either unstarted and empty, or started. Do
@@ -135,6 +144,53 @@ its own branch, and one checkout can only have one branch checked out — two of
 `current checkout` would switch branches under each other, and two agents running tests in one
 directory interfere even when their edits do not overlap. Before starting a wave together, say
 so and let the human decide between sequential starts and a worktree each (`--worktree`).
+
+## Follow-ups, and changing the model mid-run
+
+A follow-up is `start` again on the same thread, with `--text` or another prompt file. It runs
+on the thread's current model and effort unless you say otherwise:
+
+```bash
+t3.py start <thread-id> --text "Selector still red on test_x; state what you are waiting on."
+t3.py start <thread-id> --text "..." --model fable --effort high   # this turn onward
+t3.py model <thread-id> --model fable                             # keep effort, change model
+t3.py model <thread-id> --effort xhigh                            # keep model, raise effort
+```
+
+`model` goes through `thread.meta.update` and takes effect at the next turn; a turn already
+running finishes on the model it started with. Both commands fill whatever you leave out from
+the thread's stored selection, so one flag is enough. `status` shows the result.
+
+**When to escalate.** The plan's **Escalation:** line is the rule; this is what it usually says,
+and what to do when it is silent:
+
+- **Second correction follow-up on the same unit.** The first follow-up is normal. The second
+  means the unit is not converging on this model. Escalate before sending it.
+- **Wrong-direction stall.** `status` shows the same failing selector, or edits to files outside
+  the unit's scope, across three or more tool calls. `interrupt` first, then escalate, then send
+  the follow-up.
+- **The unit reports it cannot verify, or made a design decision alone**, and the plan did not
+  mark it attended. Escalate for the follow-up that asks it to re-check.
+- **A `BLOCKED-ON-YOU` question that is really a judgement call** the prompt should have settled.
+  Answer it, and escalate so the rest of the unit gets the same judgement.
+
+Default ladder: `opus` → `fable high`; `fable high` → `fable xhigh`. `sonnet` escalates straight
+to `fable high`, not to opus — the unit was supposed to be mechanical, and it is not. Up only,
+never down inside a unit; a cheaper model gets its chance on the next unit, not this one. `max`
+only when the plan names it.
+
+**Restate the state when you switch.** The new model gets the transcript but not the old model's
+reasoning. The follow-up that escalates should say in two or three lines what has been tried,
+what is failing, and what done looks like — not "see above".
+
+**Ask first where the plan says so.** Units the **Escalation:** line lists as ask-first, and every
+unit in the attended tail: tell the human what you see and propose the switch; do not run
+`model` until they answer. Everywhere else, escalate, then tell the human you did, with the
+reason in one line. Say so again in the final summary so the integration unit knows which units
+changed model mid-flight.
+
+**Pick fable up front for the next unit** if two units of the same kind have already escalated.
+That is plan feedback: say it, so the next plan's **Model choices.** paragraph starts there.
 
 ## Watching
 
@@ -167,6 +223,11 @@ age, and post a message into that thread asking it to state what it is waiting o
 answer is already there when they look. Do not kill it automatically — a legitimately long unit
 and a hung one look identical from outside, and only the human knows which this is.
 
+Fable units run long turns by design. A fable thread with a *moving* command — the age resets
+as it works — is not stalled however long the turn has run; only a single command that has not
+moved counts. Apply the same `--stall-minutes` to every model, and read the command line, not
+the turn's age.
+
 ## Killing and restarting
 
 ```bash
@@ -180,13 +241,13 @@ again with the same prompt file.
 
 ## Reference
 
-`t3.py` also has `projects`, `messages <thread>`, `rename <thread> <title>` and
-`delete <thread>`. Run `t3.py --help`.
+`t3.py` also has `projects`, `messages <thread>`, `model <thread>`, `rename <thread> <title>`
+and `delete <thread>`. Run `t3.py --help`.
 
 Commands the bus accepts that `t3.py` does not yet wrap, should you need them:
 `thread.approval.respond`, `thread.user-input.respond`, `thread.settle`, `thread.archive`,
-`thread.meta.update` with `expectedBranch` for optimistic concurrency. They are all in
-`packages/contracts/src/orchestration.ts`.
+`thread.meta.update` with `branch` and `expectedBranch` for optimistic concurrency. They are all
+in `packages/contracts/src/orchestration.ts`.
 
 ## What to distrust
 
@@ -200,3 +261,6 @@ Commands the bus accepts that `t3.py` does not yet wrap, should you need them:
   empty drafts are discarded on navigation, and a new draft inherits the previous thread's
   model and branch. Every one of those is invisible until it has already gone wrong. The API
   has none of them.
+- **Do not let a unit inherit the UI's default model.** T3 Code's own default for new chats is
+  whatever its picker last had, and the picker's effort default is `medium`. Every unit thread
+  is created by `t3.py create` with the plan's row, and `status` proves it before `start`.

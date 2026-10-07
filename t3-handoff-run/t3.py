@@ -32,18 +32,25 @@ COOKIE_JAR = Path(
     os.environ.get("T3_COOKIE_JAR", Path.home() / ".config" / "t3-orchestrator" / "cookies.txt")
 )
 
-# Plan tables say "Opus" and "Sonnet"; the API wants ids.
+# Plan tables say "fable", "opus", "sonnet"; the API wants ids. Bare names
+# resolve to the current generation T3 Code lists for its claudeAgent
+# provider. Versioned keys exist for plans that pin an older model.
 MODEL_IDS = {
-    "opus": "claude-opus-5",
-    "opus5": "claude-opus-5",
-    "opus5.5": "claude-opus-5-5",
-    "sonnet": "claude-sonnet-5",
-    "sonnet5": "claude-sonnet-5",
-    "sonnet5.5": "claude-sonnet-5-5",
     "fable": "claude-fable-5-1",
-    "haiku": "claude-haiku-4-5",
+    "fable5.1": "claude-fable-5-1",
+    "opus": "claude-opus-5-5",
+    "opus5.5": "claude-opus-5-5",
+    "opus5": "claude-opus-5",
+    "sonnet": "claude-sonnet-5-5",
+    "sonnet5.5": "claude-sonnet-5-5",
+    "sonnet5": "claude-sonnet-5",
 }
-EFFORTS = {"low", "medium", "high", "xhigh", "max", "ultracode", "ultrathink"}
+SHORT_NAMES = {v: k for k, v in MODEL_IDS.items() if "." not in k and k[-1].isalpha()}
+SHORT_NAMES.update({"claude-opus-5": "opus5", "claude-sonnet-5": "sonnet5"})
+# The plan's effort vocabulary. T3 Code also offers "ultracode" and
+# "ultrathink"; neither is plan vocabulary and neither is accepted here.
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+# No fast mode, ever. Fable has no such option and the plans never ask for it.
 RUNTIME_MODES = {"approval-required", "auto-accept-edits", "auto", "full-access"}
 
 
@@ -146,20 +153,68 @@ def project_id(name: str) -> str:
     raise SystemExit(f"no project named {name!r}. Known: {known}")
 
 
-def model_selection(model: str, effort: str, context: str, fast: bool) -> dict:
+def model_id(model: str) -> str:
     key = model.lower().replace(" ", "").replace("-", "")
-    model_id = MODEL_IDS.get(key, model)
+    return MODEL_IDS.get(key, model)
+
+
+def model_selection(model: str, effort: str, context: str = "1m") -> dict:
     if effort not in EFFORTS:
-        raise SystemExit(f"effort {effort!r} not one of {sorted(EFFORTS)}")
+        raise SystemExit(f"effort {effort!r} not one of {list(EFFORTS)}")
     return {
         "instanceId": "claudeAgent",
-        "model": model_id,
+        "model": model_id(model),
         "options": [
             {"id": "effort", "value": effort},
-            {"id": "fastMode", "value": fast},
             {"id": "contextWindow", "value": context},
         ],
     }
+
+
+def describe_selection(selection: dict | None) -> str:
+    """'fable high' from a stored modelSelection; '-' when the thread has none."""
+    if not selection:
+        return "-"
+    mid = selection.get("model") or "?"
+    opts = {o.get("id"): o.get("value") for o in selection.get("options") or []}
+    short = SHORT_NAMES.get(mid, mid)
+    effort = opts.get("effort") or opts.get("reasoningEffort") or "?"
+    return f"{short} {effort}"
+
+
+def current_selection(thread_id: str) -> dict | None:
+    with db() as conn:
+        row = conn.execute(
+            "select model_selection_json from projection_threads where thread_id = ?",
+            (thread_id,),
+        ).fetchone()
+    if row is None:
+        raise SystemExit(f"no thread {thread_id}")
+    if not row["model_selection_json"]:
+        return None
+    try:
+        return json.loads(row["model_selection_json"])
+    except json.JSONDecodeError:
+        return None
+
+
+def merged_selection(thread_id: str, model: str | None, effort: str | None, context: str | None) -> dict:
+    """Thread's stored selection with the given fields overridden.
+
+    Lets `start --effort xhigh` keep the model, and `model --model fable` keep
+    the effort. Missing pieces fall back to fable high, the plan's own default
+    for anything that reaches an escalation.
+    """
+    cur = current_selection(thread_id) or {}
+    opts = {o.get("id"): o.get("value") for o in cur.get("options") or []}
+    stored_effort = opts.get("effort")
+    if stored_effort not in EFFORTS:  # T3-only values such as ultracode
+        stored_effort = None
+    return model_selection(
+        model or cur.get("model") or "fable",
+        effort or stored_effort or "high",
+        context or opts.get("contextWindow") or "1m",
+    )
 
 
 # --------------------------------------------------------------------------
@@ -192,9 +247,7 @@ def cmd_create(args) -> None:
             "threadId": thread_id,
             "projectId": project_id(args.project),
             "title": args.title,
-            "modelSelection": model_selection(
-                args.model, args.effort, args.context, args.fast
-            ),
+            "modelSelection": model_selection(args.model, args.effort, args.context),
             "runtimeMode": args.runtime,
             "interactionMode": "default",
             "branch": args.branch,
@@ -221,12 +274,20 @@ def cmd_start(args) -> None:
         "runtimeMode": args.runtime,
         "interactionMode": "default",
     }
-    if args.model:
-        command["modelSelection"] = model_selection(
-            args.model, args.effort, args.context, args.fast
-        )
+    if args.model or args.effort or args.context:
+        selection = merged_selection(args.thread, args.model, args.effort, args.context)
+        command["modelSelection"] = selection
+        print(f"turn runs as {describe_selection(selection)}")
     dispatch(command)
     print(f"started turn on {args.thread}")
+
+
+def cmd_model(args) -> None:
+    """Change a thread's model or effort for its next turns. Up only is policy, not code."""
+    before = current_selection(args.thread)
+    after = merged_selection(args.thread, args.model, args.effort, args.context)
+    dispatch({"type": "thread.meta.update", "threadId": args.thread, "modelSelection": after})
+    print(f"{describe_selection(before)} -> {describe_selection(after)} on {args.thread}")
 
 
 def cmd_interrupt(args) -> None:
@@ -264,6 +325,7 @@ def _thread_rows(conn, project: str | None):
     sql = (
         "select t.thread_id, t.title, t.branch, t.worktree_path, "
         "       t.pending_approval_count, t.pending_user_input_count, "
+        "       t.model_selection_json, "
         "       p.title as project "
         "from projection_threads t "
         "join projection_projects p on p.project_id = t.project_id "
@@ -348,8 +410,12 @@ def cmd_status(args) -> None:
             if args.only and state != args.only:
                 continue
             where = row["worktree_path"] or "current checkout"
+            try:
+                selection = json.loads(row["model_selection_json"] or "null")
+            except json.JSONDecodeError:
+                selection = None
             print(f"{state:15} {row['title'][:48]:48} {row['branch'] or '-':28} {where}")
-            print(f"{'':15} {row['thread_id']}")
+            print(f"{'':15} {row['thread_id']}  {describe_selection(selection)}")
             if running:
                 age = age_minutes(running["since"])
                 mins = f"{age:.0f}m" if age is not None else "?"
@@ -388,9 +454,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("create", help="create a configured thread, unstarted")
     p.add_argument("--project", required=True)
     p.add_argument("--title", required=True)
-    p.add_argument("--model", default="opus")
-    p.add_argument("--effort", default="medium")
-    p.add_argument("--context", default="1m")
+    p.add_argument("--model", default="opus", help="fable | opus | sonnet, or a full id")
+    p.add_argument("--effort", default="high", choices=EFFORTS)
+    p.add_argument("--context", default="1m", choices=["200k", "1m"])
     p.add_argument("--branch", default=None)
     p.add_argument(
         "--worktree",
@@ -398,19 +464,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="absolute path; omit for the current checkout (the usual case)",
     )
     p.add_argument("--runtime", default="auto", choices=sorted(RUNTIME_MODES))
-    p.add_argument("--fast", action="store_true")
     p.set_defaults(func=cmd_create)
 
-    p = sub.add_parser("start", help="send a prompt and start the turn")
+    p = sub.add_parser(
+        "start",
+        help="send a prompt and start a turn; --model/--effort override for this turn onward",
+    )
     p.add_argument("thread")
     p.add_argument("--prompt-file")
     p.add_argument("--text")
-    p.add_argument("--model", default=None)
-    p.add_argument("--effort", default="medium")
-    p.add_argument("--context", default="1m")
+    p.add_argument("--model", default=None, help="fable | opus | sonnet; default: thread's own")
+    p.add_argument("--effort", default=None, choices=EFFORTS, help="default: thread's own")
+    p.add_argument("--context", default=None, choices=["200k", "1m"])
     p.add_argument("--runtime", default="auto", choices=sorted(RUNTIME_MODES))
-    p.add_argument("--fast", action="store_true")
     p.set_defaults(func=cmd_start)
+
+    p = sub.add_parser("model", help="change a thread's model/effort for its next turns")
+    p.add_argument("thread")
+    p.add_argument("--model", default=None, help="fable | opus | sonnet; default: keep")
+    p.add_argument("--effort", default=None, choices=EFFORTS, help="default: keep")
+    p.add_argument("--context", default=None, choices=["200k", "1m"])
+    p.set_defaults(func=cmd_model)
 
     for name, func, helptext in (
         ("interrupt", cmd_interrupt, "stop the current turn, keep the session"),

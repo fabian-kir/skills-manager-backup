@@ -42,7 +42,7 @@ All output land in `handoff/` at repo root. Two kinds of file, nothing else:
 handoff/handoff.md              # plan — goal, reasoning, unit table, unit notes, all prompts
 handoff/Unit_1-opus_high.md     # prompt for unit 1, nothing else
 handoff/Unit_2-sonnet_medium.md
-handoff/Unit_N-opus_high.md     # final integration unit
+handoff/Unit_N-fable_high.md    # final integration unit
 ```
 
 **`handoff/handoff.md` is the source.** Holds goal, reasoning, unit table, the unit-notes section
@@ -55,8 +55,9 @@ file, select all, paste into fresh session — that is whole use. Copy text, do 
 copies must not drift. Prompt change in `handoff.md` → rewrite the unit file same moment.
 
 Filename `Unit_<N>-<model>_<effort>.md`: `<N>` unit number from table, `<model>` short model name
-lowercase (`opus`, `sonnet`, `haiku`) from Model column, `<effort>` Effort column lowercase (`low`,
-`medium`, `high`). Unit 1, opus, high → `handoff/Unit_1-opus_high.md`.
+lowercase (`fable`, `opus`, `sonnet`) from Model column, `<effort>` Effort column lowercase (`low`,
+`medium`, `high`, `xhigh`, `max`). Unit 1, opus, high → `handoff/Unit_1-opus_high.md`. Model and
+effort come from § "Model and effort per unit", chosen per unit — never from habit.
 
 User give other directory or plan filename → use it, keep same layout inside.
 
@@ -163,6 +164,69 @@ is judgement not passing suite. Final integration unit (below) always in this ta
 **Resolve open questions before cutting.** Anything conversation left undecided that a unit would
 decide → decide here, in plan, in prompt. Or flag unit attended. Unit forced to decide alone will
 decide, and you find out after three units built on it.
+
+## Model and effort per unit
+
+Three models in play, all 1M context. List price per million tokens, in / out:
+
+| Model | Short | $/M in / out | Use for |
+|---|---|---|---|
+| Claude Fable 5.1 | `fable` | 10 / 50 | judgement, unknown failure mode, long horizon, anything that drew follow-ups on opus before |
+| Claude Opus 5.5 | `opus` | 4 / 20 | default — complete spec, shape to copy, moderate scope |
+| Claude Sonnet 5.5 | `sonnet` | 2 / 10 | mechanical repeat of landed shape, selector catches wrong result cheap |
+
+**Judge cost per landed unit, not per token.** Opus unit that needs two correction follow-ups
+costs more than one clean fable turn — in tokens, and in human attention each follow-up burns,
+which is the scarcer thing. Habit says opus medium or opus high for every row. Habit is right for
+most rows and wrong for a known minority; find that minority with the tests below.
+
+**Fable when any one holds:**
+
+- Unit decides what plan could not pin: interface shape, error mode, layout later units copy.
+  Reference slice qualifies when existing code does not already dictate its conventions.
+- Correctness is judgement, not passing suite: integration review, reconciling notes, data
+  migration, security-relevant change.
+- Failure mode unknown at plan time: debugging, flaky test, "make X work" with cause not found.
+- Long horizon: measured diff share above roughly 30% of batch, or more than ~15 files expected,
+  or several stages (build, migrate, verify) that must land in one session.
+- Evidence: comparable earlier unit on opus needed two or more correction follow-ups, replan, or
+  stalled. Same kind of work → fable. Check earlier `handoff/` plans and thread history if there.
+- Prompt cannot remove an ambiguity and unit must still run unattended.
+
+**Opus when:** spec complete, shape exists to copy, scope moderate, selector shows failure
+plainly. Most units.
+
+**Sonnet when:** work is landed shape copied N more times, rename sweep, test additions from
+template, docs sync behind a check — and selector would catch a wrong result cheaply. Not for
+anything where wrong-but-green is possible.
+
+**Effort tiers** — `low`, `medium`, `high`, `xhigh`, `max`:
+
+- `high` — default for opus and fable units. Not `medium`: Opus 5.5 defaults to medium and that
+  sits one step below what Claude Code runs agentic work at; a medium unit reads less and asks
+  more.
+- `xhigh` — long tool-call chain, debugging, many expected test cycles. Final integration unit
+  with two or more parallel branches to merge.
+- `max` — only where wrong answer is expensive to undo and selector cannot catch it. Rare. Reason
+  in plan.
+- `medium` — sonnet mechanical units. Never for fable: paying for the model, then throttling it.
+- `low` — subagents a unit spawns for lookups. Not a unit tier.
+- `ultracode`, `ultrathink` exist in T3 Code's picker. Not plan vocabulary; keep out of table.
+
+**Final integration unit: fable high.** Batch of one or two units → opus high acceptable.
+
+**Fable prompts differ.** State what done looks like, constraints, selector, commit rule. Do not
+script every step — over-prescription lowers fable's output. Verbatim rules still verbatim.
+Fable turns run long; quiet twenty minutes on fable usually means working, not stuck.
+
+**Escalation rule, written in plan.** Runner may raise a unit's model or effort mid-run — second
+correction follow-up, stall with wrong-direction work, unit says it cannot verify. Up only, never
+down inside a unit. Plan line `**Escalation:**` states default (`opus → fable high`;
+`fable high → fable xhigh`) and names units where runner must ask human before switching.
+`t3-handoff-run` executes it.
+
+**Reason per non-default row.** Any row not opus high gets a short why in `**Model choices.**`
+under the table. Reader sees why fable, why sonnet, without re-deriving.
 
 ## Tests per unit
 
@@ -284,9 +348,16 @@ follow, each a bold claim with justification after it.>
 
 | Done | Number | Title | Branch | Parallel-To | Tests | Model | Effort | Prompt file |
 |---|---|---|---|---|---|---|---|---|
-| [ ] | 1 | <title> | `<branch>` | — | `<selector>` | <model> | <low/medium/high> | `handoff/Unit_1-<model>_<effort>.md` |
-| [ ] | 2 | <title> | `<branch>` | 3, 4 | `<selector>` | <model> | <effort> | `handoff/Unit_2-<model>_<effort>.md` |
-| [ ] | N | Integration and merge | `<work-branch>` | — | full suite | <model> | <effort> | `handoff/Unit_N-<model>_<effort>.md` |
+| [ ] | 1 | <title> | `<branch>` | — | `<selector>` | fable | high | `handoff/Unit_1-fable_high.md` |
+| [ ] | 2 | <title> | `<branch>` | 3, 4 | `<selector>` | opus | high | `handoff/Unit_2-opus_high.md` |
+| [ ] | N | Integration and merge | `<work-branch>` | — | full suite | fable | high | `handoff/Unit_N-fable_high.md` |
+
+**Model choices.** <One line per row that is not opus high: unit, model, effort, why — per
+§ "Model and effort per unit". Example: "1 fable high — sets layout 2–4 copy, conventions not
+in repo yet." "3 sonnet medium — copies unit 1 shape, selector catches drift.">
+
+**Escalation:** <default, e.g. second correction follow-up → fable high; fable already → xhigh.
+Units where runner asks human before switching: <n>, <m>, or none.>
 
 **Why this order.** <What unit 1 establish, which units copy it, what unit N wait on — name the
 artefact (table, type, interface), not "dependencies".>
@@ -382,6 +453,9 @@ Check draft against each:
 11. Repository handoff policy checked with `git check-ignore` and repository instructions? If
     handoffs are scratch, confirm no `git add -f`, no tracked handoff path, and no plan to
     commit-then-delete.
+12. Model and effort per row chosen against § "Model and effort per unit", not habit? Every row
+    not opus high has its line under `**Model choices.**`? `**Escalation:**` line present? Final
+    unit fable high (or opus high with reason)?
 
 Then write files, present them. User want units run → units run in fresh sessions, one prompt file
 each. This conversation's context is what the document exist to replace.
