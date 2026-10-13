@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "1c93d551-7a3a-4ce3-a4e1-298b56ea0bb3",
+  "path": "cross-device-handoff",
+  "path_key": "cross-device-handoff",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
