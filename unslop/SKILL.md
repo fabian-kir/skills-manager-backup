@@ -1,6 +1,6 @@
 ---
 name: unslop
-description: Cut AI tells from any writing. Must always apply.
+description: Cut AI tells from writing intended for other readers, such as emails, reports, presentation text, articles, and public posts. Also apply to explanations in any discipline when answering well requires knowledge beyond the user's likely background, including answers that would otherwise assume familiarity with codebase internals, specifications, or specialist concepts. Infer the user's familiarity from the conversation. Do not apply automatically to routine chat replies, simple factual answers, code, or working notes unless they meet the explanation criterion. Apply whenever explicitly requested.
 disable-model-invocation: true
 ---
 
