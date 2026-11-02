@@ -3,7 +3,7 @@ name: english-headsup
 description: Always watch for useful improvements to the user's English, without interrupting their task.
 ---
 
-Complete the main task first. When the user's own English contains a clear, worthwhile learning opportunity, append at most one line, capped at 20 words:
+Complete the main task first. Offer tips occasionally, not in every reply; most replies should have none. When the user's own English presents a particularly useful learning opportunity, append a brief line that takes only a moment to read:
 
 English tip: "original" → "better".
 
