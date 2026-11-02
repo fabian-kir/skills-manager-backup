@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "fdc6c206-53a4-4d9c-b1d2-b7be3682b2a3",
+  "path": "bene-gesserit",
+  "path_key": "bene-gesserit",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
