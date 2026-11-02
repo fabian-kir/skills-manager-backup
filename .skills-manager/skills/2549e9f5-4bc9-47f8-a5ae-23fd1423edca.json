@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "2549e9f5-4bc9-47f8-a5ae-23fd1423edca",
+  "path": "english-headsup",
+  "path_key": "english-headsup",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
