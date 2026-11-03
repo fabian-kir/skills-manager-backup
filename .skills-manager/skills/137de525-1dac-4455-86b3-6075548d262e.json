@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "137de525-1dac-4455-86b3-6075548d262e",
+  "path": "brag",
+  "path_key": "brag",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "skillssh",
+    "ref": "latent-spaces/brag/brag",
+    "subpath": "skills/brag",
+    "branch": null
+  }
+}
