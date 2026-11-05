@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "86ccbdb3-b739-473c-bad4-7031f6b9d046",
+  "path": "captain-obvious",
+  "path_key": "captain-obvious",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "skillssh",
+    "ref": "shmulc8/captain-obvious/captain-obvious",
+    "subpath": "skills/captain-obvious",
+    "branch": null
+  }
+}
