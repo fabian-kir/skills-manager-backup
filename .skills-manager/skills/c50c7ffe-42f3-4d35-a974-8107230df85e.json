@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "c50c7ffe-42f3-4d35-a974-8107230df85e",
+  "path": "arena",
+  "path_key": "arena",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "skillssh",
+    "ref": "mariusflorescu/pstack-t3/arena",
+    "subpath": "skills/arena",
+    "branch": null
+  }
+}
