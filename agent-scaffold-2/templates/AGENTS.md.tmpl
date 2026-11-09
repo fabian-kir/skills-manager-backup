@@ -1,0 +1,84 @@
+# {{PROJECT_NAME}} — rules for every agent in this folder
+
+Read this file fully before doing anything. Applies to every agent, subagent and session, in any tool.
+Keep it under 200 lines: it is loaded into every session. Detail lives in `agents/`, loaded on demand.
+
+## 1. What this is
+
+{{PURPOSE}}
+
+Deliverable: {{DELIVERABLE}}. Deadline/cadence: {{DEADLINE}}. Owner: {{OWNER}}.
+Files in {{LANGUAGE_FILES}}; chat may be {{LANGUAGE_CHAT}}. Out of scope: {{OUT_OF_SCOPE}}.
+Profile: `{{PROFILE}}` (scaffolded {{DATE}} by agent-scaffold; config in `agents/config.json`).
+
+## 2. Read first, and how much
+
+1. `agents/STATUS.md` — goal, position, checkpoints, open threads. Always.
+2. `agents/registers/decisions/INDEX.md` and `agents/registers/lessons/INDEX.md` — the **index**, not the entries. Open an entry only when it bears on your task.
+3. `agents/registers/examples/INDEX.md` — current-best examples. Copy a landed example before inventing.
+4. `agents/registers/glossary.md` — one meaning per term. A file that uses a term differently is wrong.
+Then your task's own files. Do not read `agents/scratch/` unless you work on that spike. Do not read `agents/inbox/` unless you are the curator.
+
+## 3. Nothing exists until it is in a file
+
+Chat output is not a result. Before you report (to the user or a parent agent), the result is in a file.
+Report shape, exactly:
+
+```
+File: <path of your owned file>
+Recorded: <n> items — <m> direct into agents/registers, <k> to agents/inbox (or none)
+Log: DONE line appended to agents/LOG.md
+Summary: <three lines: found / uncertain / open>
+```
+
+Save drafts early: more than ten minutes or three facts → write, keep going. Document a dead end as a result ("not found, searched X, Y").
+
+## 4. Where things go
+
+| What | Where | How to write |
+|---|---|---|
+| Your work product | the work folder for your task (section 9) | your own file; name `YYYYMMDD_<topic>_<your-name>.md`; check with `ls` that it is free; edit only files you created in this run |
+| Anything with no template or register | `agents/scratch/<date>-<slug>/` | `agents/scripts/spike.py new <slug> --goal "..."`; free form inside; not authoritative |
+| A decision, lesson, standing rule, example you think should persist | `agents/registers/` or `agents/inbox/` — the script decides | `agents/scripts/propose.py <kind> --title "..." --by <you>` — never write a register file by hand. {{REGISTER_WRITE_LINE}} |
+| An open question | `agents/registers/questions.md` | `propose.py question ...` (append-only) |
+| A source you used | `agents/registers/sources.md` | `agents/scripts/append.sh agents/registers/sources.md "| S<id> | type | title | url | accessed | used in |"` |
+| Done-line, progress | `agents/LOG.md` | `append.sh` one line; a write hook may also log automatically |
+| Status, plan, checkpoints | `agents/STATUS.md` | orchestrator or human only; you report via LOG |
+
+Shared files (`questions.md`, `sources.md`, `LOG.md`) are append-only: one line per entry, never Edit/Write tools on them (they replace the whole file and lose other agents' lines). Never reorder or "clean up" a shared file.
+Never delete; mark `status: superseded`. No new file to record that you did something — the log line is the record. Add to something before adding something.
+
+## 5. Roles — by how you were started, not by self-assessment
+
+- **Worker** (default; every subagent; any session not started as curator): uses the structure, records through `propose.py` only, never promotes, attests or retires, never edits this file or a register file by hand.
+- **Curator** (a session the human started for cleanup, or the human): empties the inbox and reviews direct-written entries with `agents/scripts/promote.py`, runs `lint.py`, regenerates indexes, closes spikes, edits this file. Follow `agents/roles/curator.md`.
+- **Verifier** (started with a clean context, read-only tools): checks one artefact against its sources; does not fix; writes `<artefact>_VERIFIED.md` next to it. Follow `agents/roles/verifier.md`.
+If you were started as a subagent or at reduced effort, you are a worker: propose with `--inbox`, don't promote.
+
+## 6. Session start and the cleanup nudge
+
+Run `python3 -I agents/scripts/status.py` first. One line, deterministic.
+If its last line is `NUDGE: yes`, end your **first** reply with one sentence offering a cleanup — e.g. "Cleanup is due (inbox 7, two stale spikes). Start a curator run?" — then run `status.py --nudged`. Once per session. Never start the cleanup yourself; the human's yes starts a curator session. If the human says not now: `status.py --snooze`. Subagents and reduced-effort sessions say "cleanup is due — start a curator session" instead of offering.
+
+## 7. Spikes — when there is no template for it
+
+Scratch is the default for anything unfinished: option comparisons, half results, candidates before a winner, quick scripts. One folder per line of work, `spike.md` with goal and exit condition, tentative decisions as one-liners (`spike.py tentative <slug> --text "..."`). Spikes end by harvest or discard (curator) or get flagged after {{SPIKE_DAYS}} idle days. Only the winner leaves scratch — via a work folder (`status: final`) or `propose.py example`.
+Plans written by a planning skill (e.g. planning-handoff) are spikes too: `agents/scratch/<date>-<plan>/handoff.md`, notes-between-units inside it, the final unit harvests (decisions → `propose.py decision --origin <plan>`), then `spike.py close`. Scratch is never committed or force-added.
+
+## 8. Rules that bind
+
+- Every fact has a source id in `sources.md`; numbers, dates, names copied exactly; contested → say so, give both.
+- Separate facts, interpretation, relevance in every file.
+- Own only your files. Parallel agents never share a file; parallelism is declared in `STATUS.md`, never inferred.
+- A choice someone could later undo without knowing why → `propose.py decision`. Chosen *for* the user rather than *with* them → add `--scope`. Not your own choice, or low context → add `--inbox`.
+- A correction from the human that should apply next time → `propose.py rule` (or `lesson`). Do not just comply silently.
+- Identifiers, paths, commands verbatim — never paraphrase them.
+{{CONFIDENTIALITY}}
+
+## 9. Profile: {{PROFILE}}
+
+{{PROFILE_SECTION}}
+
+## 10. For humans
+
+`agents/README.md` explains this structure in plain words. Curator checklist: `agents/roles/curator.md`. Lint: `python3 -I agents/scripts/lint.py`.

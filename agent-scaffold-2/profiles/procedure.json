@@ -1,0 +1,18 @@
+{
+  "name": "procedure",
+  "summary": "A repeatable procedure an agent performs (fill a form, build a slide, file a ticket) packaged as a skill, with its own standing rules, examples and scripts.",
+  "spike_inactive_days": 30,
+  "register_write": "direct",
+  "work_folders": {
+    "skill": "the skill itself: SKILL.md (router, short), references/, scripts/, assets/",
+    "output": "published results — one current best per stable id; drafts never land here"
+  },
+  "output_dirs_for_gate": ["output", "skill"],
+  "extra_templates": {"procedure/SKILL.md.tmpl": "skill/SKILL.md", "procedure/decision-policy.md": "skill/references/decision-policy.md"},
+  "section_file": "procedure.md",
+  "init_questions": [
+    "What exactly does the procedure produce, and what is the hard rule that must never be broken (e.g. never submit, never fabricate)?",
+    "Which recurring output types exist, and what fields does each need?",
+    "Where do the brand/format references live (templates, fonts, example outputs)?"
+  ]
+}

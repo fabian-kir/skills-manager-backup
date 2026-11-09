@@ -1,0 +1,17 @@
+{
+  "name": "code-repo",
+  "summary": "Long-lived software repository under git with specs, tests and sequential or parallel implementation units.",
+  "spike_inactive_days": 14,
+  "register_write": "direct",
+  "work_folders": {
+    "docs": "specification documents (normative) — code follows them; existing layout is kept"
+  },
+  "output_dirs_for_gate": ["src", "tests", "docs"],
+  "extra_templates": {},
+  "section_file": "code-repo.md",
+  "init_questions": [
+    "What is the verify command (tests, types, lint) that must be green before a commit?",
+    "Branch and commit conventions, if any beyond what the repo shows?",
+    "Which existing docs are normative (code must follow them)?"
+  ]
+}

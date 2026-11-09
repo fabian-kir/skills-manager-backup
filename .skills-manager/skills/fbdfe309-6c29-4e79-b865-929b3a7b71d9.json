@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "fbdfe309-6c29-4e79-b865-929b3a7b71d9",
+  "path": "agent-scaffold-2",
+  "path_key": "agent-scaffold-2",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "local",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
