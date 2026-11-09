@@ -1,0 +1,21 @@
+{
+  "name": "research-case",
+  "summary": "Time-boxed research or analysis with many parallel agents and a written deliverable (memo, brief, deck notes). Typically no git; OneDrive/iCloud versioning.",
+  "spike_inactive_days": 2,
+  "work_folders": {
+    "00_inputs/originals": "what the human gave us — read-only",
+    "00_inputs/extracted": "plain-text extracts of the originals — agents read these",
+    "01_context": "brief, research questions, framework — derived from inputs at init",
+    "02_research": "one subfolder per stream, one file per agent and topic (finding template)",
+    "03_synthesis": "cross-stream comparison, patterns, mapping to the brief",
+    "04_deliverables": "what goes to the recipient"
+  },
+  "output_dirs_for_gate": ["02_research", "03_synthesis", "04_deliverables"],
+  "extra_templates": {"entries/finding.md": "agents/templates/finding.md"},
+  "section_file": "research-case.md",
+  "init_questions": [
+    "Who is the recipient of the deliverable and in what form (memo, slides, table)?",
+    "What are the research questions or streams? (I will derive them from the inputs if you point me to them.)",
+    "Which inputs are confidential and must never go into a web search?"
+  ]
+}

@@ -1,0 +1,6 @@
+Verify: `{{VERIFY_COMMAND}}` — the single most useful line in this file. Green before every commit. Failure outside your selector is not yours: report it, do not fix it.
+Tiers: normative (`docs/`, `agents/registers/decisions/`) — code follows these; derived (reports, generated indexes) — never edited to disagree with their source; operational (README, this file) — just make it true; scratch (`agents/scratch/`, never committed). A change to code or to a normative doc that is not reflected in the other is the defect: fix both in one commit, or record the divergence as a decision.
+Ambiguous spec → pick a reading, implement, propose the decision, and edit the doc so it reads one way.
+Handoff plans (planning-handoff skill) live in `agents/scratch/<date>-<plan>/handoff.md` with the "Notes between units" section there; the final integration unit harvests: decisions made by units → `propose.py decision --origin <plan>`, then `spike.py close`. `agents/scratch/` is gitignored: never force-add; repeat every note in the closing report.
+Parallel units own disjoint files and their own branches; declared in `STATUS.md`. Commit messages say which docs moved ("also updated docs/02 §F4").
+Prefer a test to a paragraph: a lesson that can be a check goes into the test suite or `lint.py`, not into this file.

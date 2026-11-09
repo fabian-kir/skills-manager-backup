@@ -1,0 +1,18 @@
+{
+  "name": "maker",
+  "summary": "Hobby or hardware projects whose knowledge lives in binaries (3D models, slicer settings, photos) plus what you learned from each attempt. Many small projects sharing one machine, materials and lessons.",
+  "spike_inactive_days": 30,
+  "work_folders": {
+    "projects": "one folder per physical project: source/ exports/ gcode/ PROJECT.md (file guide + attempt log)",
+    "profiles": "machine and material presets (slicer profiles, filament settings)",
+    "experiments": "controlled tests (porosity, tolerance, overhang) with a sample map and results"
+  },
+  "output_dirs_for_gate": ["projects", "experiments"],
+  "extra_templates": {"maker/PROJECT.md": "agents/templates/PROJECT.md", "maker/attempt-log.md": "agents/templates/attempt-log.md"},
+  "section_file": "maker.md",
+  "init_questions": [
+    "Machine(s), nozzles, build plate, and the materials you actually use (brand + type)?",
+    "The three things you keep telling agents to do differently?",
+    "Should I inventory the loose files and propose a move into projects/ (dry run first)?"
+  ]
+}

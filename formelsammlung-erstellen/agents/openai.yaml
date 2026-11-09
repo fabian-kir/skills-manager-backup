@@ -1,0 +1,4 @@
+interface:
+  display_name: "Formelsammlung erstellen"
+  short_description: "Quellentreue, klausuroptimierte Formelsammlungen"
+  default_prompt: "Nutze $formelsammlung-erstellen, um aus den Unterlagen in diesem Ordner eine quellentreue und vollständig geprüfte Formelsammlung zu erstellen."

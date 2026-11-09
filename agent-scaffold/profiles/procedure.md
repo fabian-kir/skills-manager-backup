@@ -1,0 +1,6 @@
+The skill lives in `skill/` (`SKILL.md` ≤ 150 lines, routes to `skill/references/` and `skill/scripts/`). The hard rule stands at the top of `SKILL.md` and is repeated nowhere else.
+Standing rules from the human are not written into `SKILL.md` by workers: `propose.py rule`; the curator merges them into `skill/references/standing-rules.md` and keeps `SKILL.md` a router.
+Known quirks that cost a round trip: `propose.py lesson --rung check` first — a validation script in `skill/scripts/` beats a paragraph. Each quirk entry carries the evidence ("verified live on <date>: …").
+Outputs: candidates in `agents/scratch/<spike>/`; only the winner is published to `output/<stable-id>.<ext>` plus `output/<stable-id>.json` (settings, provenance). Publishing replaces the previous best; no `v2`, `final`, `final-final`. Published winners worth copying later → `propose.py example`.
+Decision policy (which variant/template to choose) is written as a ranking with tie-breaks in `skill/references/decision-policy.md`, so the agent does not ask the human to choose unless asked to.
+External material (images, catalog data) gets a provenance record (url, publisher, usage basis, retrieved) — internal, never rendered into the output.

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "3d122fb6-8c31-413c-852e-bfb30caee81e",
+  "path": "formelsammlung-erstellen",
+  "path_key": "formelsammlung-erstellen",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

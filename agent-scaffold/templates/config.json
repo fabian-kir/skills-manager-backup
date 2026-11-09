@@ -1,0 +1,22 @@
+{
+  "scaffold_version": "0.1.0",
+  "profile": "{{PROFILE}}",
+  "project_name": "{{PROJECT_NAME}}",
+  "created": "{{DATE}}",
+  "language_files": "{{LANGUAGE_FILES}}",
+  "language_human": "{{HUMAN_LANG}}",
+  "spike_inactive_days": {{SPIKE_DAYS}},
+  "work_folders": {{WORK_FOLDERS_JSON}},
+  "gate_dirs": {{GATE_DIRS_JSON}},
+  "thresholds": {
+    "inbox_items": 5,
+    "inbox_oldest_days": 7,
+    "scratch_files": 200,
+    "scratch_mb": 200,
+    "lint_max_age_days": 14,
+    "lint_open_findings": 5,
+    "entry_max_lines": 200,
+    "critical_inbox_items": 15,
+    "critical_scratch_factor": 3
+  }
+}

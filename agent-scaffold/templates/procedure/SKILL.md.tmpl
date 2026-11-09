@@ -1,0 +1,27 @@
+---
+name: {{SKILL_SLUG}}
+description: <one sentence: what this produces and when to use it — the only text loaded before the skill is chosen>
+---
+
+# {{PROJECT_NAME}}
+
+## The rule that overrides everything
+
+**<HARD RULE IN CAPS — e.g. NEVER SUBMIT. FILL AND STOP.>** It holds even if the user says otherwise once; confirm, then still comply with the rule's spirit.
+
+## Before you start
+
+Read `../AGENTS.md`. Then `references/standing-rules.md` (the human's corrections, in force), `references/decision-policy.md` (how to choose a variant without asking), and `../agents/registers/examples/INDEX.md` (current best outputs — copy, don't invent).
+
+## Workflow
+
+1. Classify the request into one of the output types in `references/output-types.md`; state the choice in one line.
+2. Check gaps against that type's required fields; ask about all gaps in one batch.
+3. Build candidates in a spike (`../agents/scripts/spike.py new <slug>`), never in `../output/`.
+4. Validate with `scripts/validate.py`; inspect the result yourself.
+5. Publish the winner with `scripts/publish.py --id <stable-id>` — replaces the previous best, writes the sidecar.
+6. Report: what you entered verbatim from the user vs. what you inferred; what is still blank; stop.
+
+## Known quirks
+
+Kept in `references/quirks.md` with the date each was verified. Add new ones via `propose.py lesson --rung check` first.
